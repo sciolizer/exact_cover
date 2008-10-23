@@ -1,16 +1,40 @@
-module LatinSquareCommon where
+module Square where
 
 import List
 import Array
 
+data Constraint c =
+    RowColumn Int Int
+  | RowNumber Int Val
+  | ColNumber Int Val
+  | Other c
+  deriving (Eq)
+
+constraints :: [Constraint c] -> [Constraint c]
+constraints others =
+    -- every cell must have a value
+    [RowColumn row col | row <- [0..8], col <- [0..8]]
+    -- every row must have the numbers 1 through 9
+ ++ [RowNumber row val | row <- [0..8], val <- [1..9]]
+    -- every column must have the numbers 1 through 9
+ ++ [ColNumber col val | col <- [0..8], val <- [1..9]]
+ ++ others
+    
+satisfiers :: (c -> [Move]) -> Constraint c -> [Move]
+satisfiers others = satisfiers' where
+  satisfiers' (RowColumn row col) = [Move (row,col) val | val <- [1..9]]
+  satisfiers' (RowNumber row val) = [Move (row,col) val | col <- [0..8]]
+  satisfiers' (ColNumber col val) = [Move (row,col) val | row <- [0..8]]
+  satisfiers' (Other c) = others c
+ 
 type Val = Int
 
 data Move = Move (Int,Int) Val
   deriving (Eq)
 
 solveSquare :: [c] -> (c -> [Move]) -> Grid -> Grid
-solveSquare constraints satisfiers =
-  fromMoves . head . EC.solve constraints satisfiers . toMoves
+solveSquare otherConstraints otherSatisfiers =
+  fromMoves . head . EC.solve (constraints otherConstraints) (satisfiers otherSatisfiers). toMoves
 
 data Grid = Grid [[Val]]
 

@@ -82,7 +82,7 @@ partiallySolved =
   , Place N (Position Zero False) (0,5)
   , Place L (Position Zero False) (0,6)
   , Place U (Position Zero False) (1,0)
-  --, Place X (Position Zero False) (2,2)
+  , Place X (Position Zero False) (2,2)
   --, Place W (Position Zero False) (1,3)
   --, Place P (Position Zero False) (4,0)
   ]

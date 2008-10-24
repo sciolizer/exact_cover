@@ -23,6 +23,7 @@ data Problem = Problem {
 
 data SolveError c s =
     InvalidMove s [s]
+  deriving (Show)
 
 bubbleError :: [Either (SolveError c s) a] -> Either (SolveError c s) [a]
 bubbleError [] = Right []

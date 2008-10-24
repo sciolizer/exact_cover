@@ -1,6 +1,7 @@
 module ExactCover (solve) where
 
 import List (nub, minimumBy)
+import qualified List as L
 import Maybe
 
 import qualified Data.IntSet as IS
@@ -54,7 +55,9 @@ solve constraints_ satisfiers_ knowns_ =
   in map asSatisfiers . solutions $ withKnowns
     
 minimumByMap :: (Ord b) => (Int -> b) -> IntSet -> Int
-minimumByMap f = snd . minimumBy (\(x,_) (y,_) -> compare x y) . map (\x -> (f x, x)) . IS.toList
+minimumByMap f = snd . minimum . map (\x -> (f x, x)) . IS.toList
 
 transpose :: IntMap IntSet -> IntMap IntSet
-transpose = undefined
+transpose grid = IM.fromList [(k, refs k) | k <- gridVals] where
+  gridVals = IS.toList . IS.unions . IM.elems $ grid
+  refs k = IS.fromList . IM.keys . IM.filter (IS.member k) $ grid

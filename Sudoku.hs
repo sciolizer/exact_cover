@@ -6,7 +6,7 @@ data BoxConstraint =
   BoxNumber (Int,Int) Val  -- (Int,Int) is coords of upper left cell in box
   deriving (Eq)
 
-otherConstraints :: [Constraint BoxConstraint]
+otherConstraints :: [BoxConstraint]
 otherConstraints =
   -- every box must have the numbers 1 through 9
   [BoxNumber (row,col) val | row <- [0,3,6], col <- [0,3,6], val <- [1..9]]

@@ -3,6 +3,8 @@ module Square where
 import List
 import Array
 
+import ExactCover
+
 data Constraint c =
     RowColumn Int Int
   | RowNumber Int Val
@@ -10,7 +12,7 @@ data Constraint c =
   | Other c
   deriving (Eq)
 
-constraints :: [Constraint c] -> [Constraint c]
+constraints :: [c] -> [Constraint c]
 constraints others =
     -- every cell must have a value
     [RowColumn row col | row <- [0..8], col <- [0..8]]
@@ -18,7 +20,7 @@ constraints others =
  ++ [RowNumber row val | row <- [0..8], val <- [1..9]]
     -- every column must have the numbers 1 through 9
  ++ [ColNumber col val | col <- [0..8], val <- [1..9]]
- ++ others
+ ++ map Other others
     
 satisfiers :: (c -> [Move]) -> Constraint c -> [Move]
 satisfiers others = satisfiers' where
@@ -32,9 +34,8 @@ type Val = Int
 data Move = Move (Int,Int) Val
   deriving (Eq)
 
-solveSquare :: [c] -> (c -> [Move]) -> Grid -> Grid
-solveSquare otherConstraints otherSatisfiers =
-  fromMoves . head . EC.solve (constraints otherConstraints) (satisfiers otherSatisfiers). toMoves
+solveSquare :: (Eq c) => [c] -> (c -> [Move]) -> Grid -> Grid
+solveSquare c s = fromMoves . head . solve (constraints c) (satisfiers s) . toMoves
 
 data Grid = Grid [[Val]]
 

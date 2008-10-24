@@ -1,57 +1,60 @@
 module ExactCover (solve) where
 
-import Data.Set (Set,(\\))
-import qualified Data.Set as S
-import Debug.Trace
+import List (nub, minimumBy)
+import Maybe
 
-solve :: [c] -> (c -> [s]) -> [s] -> [[s]]
-solve = undefined
+import qualified Data.IntSet as IS
+import Data.IntSet (IntSet)
+import qualified Data.IntMap as IM
+import Data.IntMap (IntMap, (!))
 
-data Problem constraint satisfier = Problem {
-    constraints :: Set constraint,
-    unknowns :: Set satisfier,
-    knowns :: Set satisfier,
-    constraintsF :: satisfier -> Set constraint,
-    satisfiersF :: constraint -> Set satisfier
+data Problem = Problem {
+  probConstraints :: IntSet,
+  probUnknowns :: IntSet,
+  probKnowns :: IntSet
   }
 
-makeEmptyProblem base c s =
-  let bs = S.fromList base
-      cs = S.fromList . c
-      ss = S.fromList . s
-      uns = S.unions (map ss base)
-      kns = S.empty
-  in Problem bs uns kns cs ss
+-- "known" and "satisfier" are very similar.
+-- A "satisfier" meets a certain constraint. A "known" is a satisfier which
+-- applies to the current problem.
 
-nextProblem prob = do
-  let cs = S.toList $ constraints prob
-  let numSatisfiers cst = S.size . S.intersection (unknowns prob) $ (satisfiersF prob cst)
-  let cs_ = map (\c -> (numSatisfiers c, c)) cs
-  let (_,c) = minimum cs_
-  -- this line acts as the only necessary guard in the whole algorithm.
-  -- backtracking occurs if newKnown tries to pull from an empty list
-  let possibleKnowns = S.toList . S.intersection (unknowns prob) . satisfiersF prob $ c
-  newKnown <- possibleKnowns
-  return $ move newKnown prob
+solve :: (Eq c, Eq s) => [c] -> (c -> [s]) -> [s] -> [[s]]
+solve constraints_ satisfiers_ knowns_ =
+  let
+    constraintsMap = zip constraints_ [0..]
+    satisfiersMap = zip (nub . concatMap satisfiers_ $ constraints_) [0..]
+    indexOf mp x = fromJust $ lookup x mp
+    c2s :: IntMap IntSet
+    c2s = IM.fromList . map (\c -> (indexOf constraintsMap c, IS.fromList $ map (indexOf satisfiersMap) (satisfiers_ c))) $ constraints_
+    s2c :: IntMap IntSet
+    s2c = transpose c2s
 
-move newKnown prob =
-  let knowns_ = S.insert newKnown (knowns prob)
-      allConstraintsRemoved = constraintsF prob newKnown
-      constraintsRemoved = S.intersection (constraints prob) allConstraintsRemoved
-      constraints_ = (constraints prob) \\ constraintsRemoved
-      satisfiersRemoved = S.intersection (unknowns prob) (S.unions (map (satisfiersF prob) (S.toList constraintsRemoved)))
-      unknowns_ = (unknowns prob) \\ satisfiersRemoved
-      ret = Problem constraints_ unknowns_ knowns_ (constraintsF prob) (satisfiersF prob)
-  in ret
+    solutions prob@(Problem c u k) = do
+      child <- children prob
+      if (IS.null . probUnknowns $ child) then return child else solutions child
 
-solutions prob = do
-  np <- nextProblem prob
-  if (S.null . unknowns $ np) then return np else solutions np
+    children prob@(Problem c u k) = do
+      -- deterministically pick the constraint with the least number of satisfiers
+      let numSatisfiers = IS.size . IS.intersection u . (c2s !)
+      let possibleKnowns = IS.intersection u . (c2s !) . minimumByMap numSatisfiers
+      -- nondeterministically pick a satisfier for the chosen constraint
+      newKnown <- IS.toList . possibleKnowns $ c
+      return $ move prob newKnown
 
-solveFromConstraints cs c s = map (S.toList . knowns) . solutions $ (makeEmptyProblem cs c s)
+    move prob@(Problem c u k) newKnown =
+      Problem
+        (IS.difference c (s2c ! newKnown))
+        (IS.difference u (IS.unions (map (c2s !) . IS.toList $ (s2c ! newKnown))))
+        (IS.insert newKnown k)
 
-solveWithSatisfiers satis c s cs =
-  let 
-    start = makeEmptyProblem cs c s
-    middle = foldl (\p m -> move m p) start satis
-  in map (S.toList . knowns) . solutions $ middle
+    indices mp = IS.fromList (map snd mp)
+    blank = Problem (indices constraintsMap) (indices satisfiersMap) IS.empty
+    withKnowns = foldl move blank (map (indexOf satisfiersMap) knowns_)
+    asSatisfiers = map (fst . (satisfiersMap !!)) . IS.toList . probKnowns
+  in map asSatisfiers . solutions $ withKnowns
+    
+minimumByMap :: (Ord b) => (Int -> b) -> IntSet -> Int
+minimumByMap f = snd . minimumBy (\(x,_) (y,_) -> compare x y) . map (\x -> (f x, x)) . IS.toList
+
+transpose :: IntMap IntSet -> IntMap IntSet
+transpose = undefined

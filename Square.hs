@@ -4,6 +4,7 @@ import List
 import Array
 
 import ExactCover
+import ArrayDefault
 
 data Constraint c =
     RowColumn Int Int
@@ -63,7 +64,3 @@ fromMoves :: [Move] -> Grid
 fromMoves = Grid . fromArray . array_default 0 ((0,0), (8,8)) . map makeAssoc where
   fromArray arr = [[arr ! (row,col) | col <- [0..8]] | row <- [0..8]]
   makeAssoc (Move (row,col) val) = ((row,col),val)
-
-array_default :: (Ix i) => e -> (i, i) -> [(i,e)] -> Array i e
-array_default def rng overrides =
-  array rng ((zip (range rng) . repeat $ def) ++ overrides)

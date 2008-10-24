@@ -2,7 +2,7 @@ module Pentominos where
 
 import Array
 import ExactCover
-import Square (array_default)
+import ArrayDefault
 import List (nubBy, sort)
 
 data Board = Board (Array (Int,Int) Bool)
@@ -82,12 +82,14 @@ partiallySolved =
   , Place N (Position Zero False) (0,5)
   , Place L (Position Zero False) (0,6)
   , Place U (Position Zero False) (1,0)
-  -- , Place X (Position Zero False) (2,2)
+  --, Place X (Position Zero False) (2,2)
   --, Place W (Position Zero False) (1,3)
   --, Place P (Position Zero False) (4,0)
   ]
 
-answer = head . solve (constraints boardWithHole) (satisfiers boardWithHole) $ partiallySolved
+answer = case solve (constraints boardWithHole) (satisfiers boardWithHole) $ partiallySolved of
+           Left err -> Left err
+           Right foo -> Right $ head foo
 
 -- There will of course be a little redundancy in coords, since some
 -- of the pieces look identical when rotated.
@@ -111,8 +113,10 @@ rotate TwoSeventy (x,y) = (y, -1*x)
 applyPosition :: Position -> (Int,Int) -> (Int,Int)
 applyPosition (Position rot flpped) = flp flpped . rotate rot
 
-solvePentomino :: Board -> [Move]
-solvePentomino brd = head . solve (constraints brd) (satisfiers brd) $ []
+solvePentomino :: Board -> Either (SolveError Constraint Move) [Move]
+solvePentomino brd = case solve (constraints brd) (satisfiers brd) $ [] of
+                       Left err -> Left err
+                       Right foo -> Right $ head foo
 
 sampleBoard = Board (array_default True ((0,0),(4,11)) [])
 

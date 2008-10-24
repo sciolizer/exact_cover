@@ -1,4 +1,4 @@
-module ExactCover (solve, consistency_check) where
+module ExactCover (solve, consistency_check, SolveError (InvalidMove)) where
 
 import List (nub, minimumBy, find)
 import qualified List as L
@@ -21,9 +21,29 @@ data Problem = Problem {
 -- A "satisfier" meets a certain constraint. A "known" is a satisfier which
 -- applies to the current problem.
 
-solve :: (Eq c, Eq s) => [c] -> (c -> [s]) -> [s] -> [[s]]
+data SolveError c s =
+    InvalidMove s [s]
+
+bubbleError :: [Either (SolveError c s) a] -> Either (SolveError c s) [a]
+bubbleError [] = Right []
+bubbleError (Left err:xs) = Left err
+bubbleError (Right x:xs) = case bubbleError xs of
+                             Left err -> Left err
+                             Right xs -> Right $ x : xs
+
+collapseError :: Either (SolveError c s) [a] -> [Either (SolveError c s) a]
+collapseError (Left err) = [Left err]
+collapseError (Right xs) = [Right x | x <- xs ]
+
+eitherBind :: (c -> Either b d) -> Either b c -> Either b d
+eitherBind f (Left e) = Left e
+eitherBind f (Right r) = case f r of { Left e -> Left e; Right x -> Right x }
+
+solve :: (Eq c, Eq s) => [c] -> (c -> [s]) -> [s] -> Either (SolveError c s) [[s]]
 solve constraints_ satisfiers_ knowns_ =
   let
+    revertS is = map (fst . (satisfiersMap !!)) . IS.toList $ is
+    revertC is = map (fst . (constraintsMap !!)) . IS.toList $ is
     constraintsMap = zip constraints_ [0..]
     satisfiersMap = zip (nub . concatMap satisfiers_ $ constraints_) [0..]
     indexOf mp x = fromJust $ lookup x mp
@@ -32,11 +52,12 @@ solve constraints_ satisfiers_ knowns_ =
     s2c :: IntMap IntSet
     s2c = transpose c2s
 
-    solutions prob@(Problem c u k) = do
-      child <- children prob
-      if (IS.null . probUnknowns $ child) then return child else solutions child
+    solutions prob@(Problem c u k) = eitherBind descend (children prob) where
+      descend childs = bubbleError $ do
+        child <- childs
+        if (IS.null . probUnknowns $ child) then return (Right child) else collapseError $ solutions child
 
-    children prob@(Problem c u k) = do
+    children prob@(Problem c u k) = bubbleError $ do
       trace (show k) (return ())
       -- deterministically pick the constraint with the least number of satisfiers
       let numSatisfiers = IS.size . IS.intersection u . (c2s !)
@@ -46,17 +67,28 @@ solve constraints_ satisfiers_ knowns_ =
       return $ move prob newKnown
 
     move prob@(Problem c u k) newKnown =
-      if not $ IS.member newKnown u then error "foo" else
-      Problem
-        (IS.difference c (s2c ! newKnown))
-        (IS.difference u (IS.unions (map (c2s !) . IS.toList $ (s2c ! newKnown))))
-        (IS.insert newKnown k)
+      if not (IS.member newKnown u)
+      then Left (InvalidMove (fst (satisfiersMap !! newKnown)) (revertS k))
+      else
+       Right $
+        Problem
+          (IS.difference c (s2c ! newKnown))
+          (IS.difference u (IS.unions (map (c2s !) . IS.toList $ (s2c ! newKnown))))
+          (IS.insert newKnown k)
 
     indices mp = IS.fromList (map snd mp)
     blank = Problem (indices constraintsMap) (indices satisfiersMap) IS.empty
-    withKnowns = foldl move blank (map (indexOf satisfiersMap) knowns_)
+    moveWithError (Left err) _ = Left err
+    moveWithError (Right r) k = move r k
+    withKnowns = foldl moveWithError (Right blank) (map (indexOf satisfiersMap) knowns_)
     asSatisfiers = map (fst . (satisfiersMap !!)) . IS.toList . probKnowns
-  in map asSatisfiers . solutions $ withKnowns
+  --in (Right $ mapM asSatisfiers) =<< solutions =<< withKnowns
+  in case withKnowns of
+       Left err -> Left err
+       Right prob ->
+         case solutions prob of
+           Left err_ -> Left err_
+           Right sls -> Right $ map asSatisfiers sls
     
 minimumByMap :: (Ord b) => (Int -> b) -> IntSet -> Int
 minimumByMap f = snd . minimum . map (\x -> (f x, x)) . IS.toList

@@ -58,7 +58,7 @@ s2c :: Move -> [Constraint]
 s2c move@(Place pent pos coord) = (PentominoUsed pent):[SquareFilled c | c <- coords move]
 
 --check :: ConsistencyCheck Constraint Move
-check = consistency_check (constraints boardWithHole) (satisfiers boardWithHole) s2c
+-- check = consistency_check (constraints boardWithHole) (satisfiers boardWithHole) s2c
 
 validMoves b = filter (validMove b)
 

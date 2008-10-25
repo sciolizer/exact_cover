@@ -49,11 +49,16 @@ l !!! (TypedInt i) = l !! i
 solve :: (Eq c, Eq s) => [c] -> (c -> [s]) -> [s] -> Either (SolveError c s) [[s]]
 solve constraints_ satisfiers_ knowns_ =
   let
-    revertS is = map (fst . (satisfiersMap !!!)) . IS.toList $ is
-    revertC is = map (fst . (constraintsMap !!!)) . IS.toList $ is
-    constraintsMap = zip constraints_ (map (typedInt constraints_) [0..])
-    satisfiersMap = zip (nub . concatMap satisfiers_ $ constraints_) (map (typedInt knowns_) [0..])
-    indexOf mp x = fromJust $ lookup x mp
+    -- revertS s = IM.findIndicesSet (== s)
+    -- revertC c = IM.findIndicesSet (== c)
+    revertS = map (satisfiersMap !) . IS.toList
+    revertC = map (constraintsMap !) . IS.toList
+    -- revertS is = map (fst . (satisfiersMap !!!)) . IS.toList $ is
+    -- revertC is = map (fst . (constraintsMap !!!)) . IS.toList $ is
+    constraintsMap = IM.fromList $ zip (map (typedInt constraints_) [0..]) constraints_ 
+    satisfiersMap = IM.fromList $ zip (map (typedInt knowns_) [0..]) (nub . concatMap satisfiers_ $ constraints_)
+    -- indexOf mp x = fromJust $ lookup x mp
+    indexOf mp x = IM.findIndex (== x) mp
     -- c2s :: TypedIntMap c (TypedIntSet s)
     c2s = IM.fromList . map (\c -> (indexOf constraintsMap c, IS.fromList $ map (indexOf satisfiersMap) (satisfiers_ c))) $ constraints_
     -- s2c :: TypedIntMap s (TypedIntSet c)
@@ -75,7 +80,7 @@ solve constraints_ satisfiers_ knowns_ =
 
     move prob@(Problem c u k) newKnown =
       if not (IS.member newKnown u)
-      then Left (InvalidMove (fst (satisfiersMap !!! newKnown)) (revertS k))
+      then Left (InvalidMove (satisfiersMap ! newKnown) (revertS k))
       else
        Right $
         Problem
@@ -83,12 +88,12 @@ solve constraints_ satisfiers_ knowns_ =
           (IS.difference u (IS.unions (map (c2s !) . IS.toList $ (s2c ! newKnown))))
           (IS.insert newKnown k)
 
-    indices mp = IS.fromList (map snd mp)
+    indices mp = IM.keysSet mp
     blank = Problem (indices constraintsMap) (indices satisfiersMap) IS.empty
     moveWithError (Left err) _ = Left err
     moveWithError (Right r) k = move r k
     withKnowns = foldl moveWithError (Right blank) (map (indexOf satisfiersMap) knowns_)
-    asSatisfiers = map (fst . (satisfiersMap !!!)) . IS.toList . probKnowns
+    asSatisfiers = map (satisfiersMap !) . IS.toList . probKnowns
   --in (Right $ mapM asSatisfiers) =<< solutions =<< withKnowns
   in case withKnowns of
        Left err -> Left err

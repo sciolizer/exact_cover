@@ -15,3 +15,7 @@ elems = IM.elems . unTypedIntMap
 filter f = TypedIntMap . IM.filter f . unTypedIntMap
 
 keysSet = TIS.TypedIntSet . IM.keysSet . unTypedIntMap
+
+(TypedIntMap mp) ! (TypedInt i) = case IM.lookup i mp of
+                                    Nothing -> error ("key not found: " ++ show i)
+                                    Just x -> x

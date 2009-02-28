@@ -7,10 +7,10 @@ data Constraint =
   | Column Int
   | ForwardDiagonal Int -- (/) value is sum of the row and column
   | BackDiagonal Int -- (\) value is difference of the row and column
-  deriving (Eq,Show)
+  deriving (Eq,Show,Ord)
 
 data Satisfier = Move Int Int -- row, col
-  deriving (Eq,Show)
+  deriving (Eq,Show,Ord)
 
 constraints :: Int -> [Constraint]
 constraints n =

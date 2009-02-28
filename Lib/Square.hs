@@ -11,7 +11,7 @@ data Constraint c =
   | RowNumber Int Val
   | ColNumber Int Val
   | Other c
-  deriving (Eq)
+  deriving (Eq,Show,Ord)
 
 constraints :: [c] -> [Constraint c]
 constraints others =
@@ -23,7 +23,7 @@ constraints others =
  ++ [ColNumber col val | col <- [0..8], val <- [1..9]]
  ++ map Other others
     
-satisfiers :: (c -> [Move]) -> Constraint c -> [Move]
+satisfiers :: (c -> [Satisfier]) -> Constraint c -> [Satisfier]
 satisfiers others = satisfiers' where
   satisfiers' (RowColumn row col) = [Move (row,col) val | val <- [1..9]]
   satisfiers' (RowNumber row val) = [Move (row,col) val | col <- [0..8]]
@@ -32,10 +32,10 @@ satisfiers others = satisfiers' where
  
 type Val = Int
 
-data Move = Move (Int,Int) Val
-  deriving (Eq)
+data Satisfier = Move (Int,Int) Val
+  deriving (Eq,Show,Ord)
 
---solveSquare :: (Eq c) => [c] -> (c -> [Move]) -> Grid -> Grid
+--solveSquare :: (Eq c) => [c] -> (c -> [Satisfier]) -> Grid -> Grid
 solveSquare c s = fromMoves . head . fromRight . solve (constraints c) (satisfiers s) . toMoves
 fromRight (Right x) = x
 
@@ -56,12 +56,12 @@ sampleGrid = Grid [
   [0,0,5,0,1,0,3,0,0]
   ]
 
-toMoves :: Grid -> [Move]
+toMoves :: Grid -> [Satisfier]
 toMoves (Grid g) = concatMap makeMove (zip coords . concat $ g) where
   makeMove ((row,col),val) = if val == 0 then [] else [Move (row,col) val]
   coords = [(row,col) | row <- [0..8], col <- [0..8]]
 
-fromMoves :: [Move] -> Grid
+fromMoves :: [Satisfier] -> Grid
 fromMoves = Grid . fromArray . array_default 0 ((0,0), (8,8)) . map makeAssoc where
   fromArray arr = [[arr ! (row,col) | col <- [0..8]] | row <- [0..8]]
   makeAssoc (Move (row,col) val) = ((row,col),val)

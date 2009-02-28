@@ -5,14 +5,14 @@ import Array
 
 data Matrix = Matrix (Array (Int,Int) Bool) deriving (Show,Eq)
 
-data Constraint = Column Int deriving (Eq,Show)
+data Constraint = Column Int deriving (Eq,Show,Ord)
 
 constraints :: Matrix -> [Constraint]
 constraints (Matrix arr) =
   let (l_bound, u_bound) = bounds arr
   in [Column c | c <- [(snd l_bound)..(snd u_bound)]]
 
-data Satisfier = Row Int deriving (Eq,Show)
+data Satisfier = Row Int deriving (Eq,Show,Ord)
 
 satisfiers :: Matrix -> Constraint -> [Satisfier]
 satisfiers (Matrix arr) (Column c) =

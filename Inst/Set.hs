@@ -4,9 +4,9 @@ import qualified Data.Set as S
 import Data.Set (Set)
 import ExactCover
 
-data Constraint a = Covered a deriving (Eq,Show)
+data Constraint a = Covered a deriving (Eq,Show,Ord)
 
-data Satisfier a = Include (Set a) deriving (Eq,Show)
+data Satisfier a = Include (Set a) deriving (Eq,Show,Ord)
 
 data SetProblem a = SetProblem (Set a) (Set (Set a))
 

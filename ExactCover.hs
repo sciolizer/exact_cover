@@ -1,117 +1,85 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 module ExactCover (solve, SolveError (InvalidMove)) where
 --consistency_check
 import List (nub, minimumBy, find)
 import qualified List as L
 import Maybe
+import Control.Monad.Error
+import Control.Monad.List
 
-import qualified TypedIntSet as IS
-import TypedIntSet (TypedIntSet(TypedIntSet,unTypedIntSet))
-import qualified TypedIntMap as IM
-import TypedIntMap (TypedIntMap, (!))
-import TypedInt
-
-import Debug.Trace
+import qualified Data.Set as S
+import qualified Data.Map as M
+import Data.Set (Set)
+import Data.Map (Map,(!))
 
 data Problem c s = Problem {
-  probConstraints :: TypedIntSet c,
-  probUnknowns :: TypedIntSet s,
-  probKnowns :: TypedIntSet s
+  probConstraints :: Set c,
+  probUnknowns :: Set s,
+  probKnowns :: Set s
   }
 
 -- "known" and "satisfier" are very similar.
 -- A "satisfier" meets a certain constraint. A "known" is a satisfier which
 -- applies to the current problem.
+--
+-- throughout the code, the type variable 'c' is short for 'constraint',
+-- and 's' is short for 'satisfier'
 
-data SolveError c s =
-    InvalidMove s [s]
-  deriving (Show)
+data SolveError c s = InvalidMove s [s] deriving (Show)
 
-bubbleError :: [Either (SolveError c s) a] -> Either (SolveError c s) [a]
-bubbleError [] = Right []
-bubbleError (Left err:xs) = Left err
-bubbleError (Right x:xs) = case bubbleError xs of
-                             Left err -> Left err
-                             Right xs -> Right $ x : xs
+instance Error (SolveError c s)
 
-collapseError :: Either (SolveError c s) [a] -> [Either (SolveError c s) a]
-collapseError (Left err) = [Left err]
-collapseError (Right xs) = [Right x | x <- xs ]
+toT :: (Monad m) => [a] -> ListT m a
+toT xs = msum . map return $ xs
 
-eitherBind :: (c -> Either b d) -> Either b c -> Either b d
-eitherBind f (Left e) = Left e
-eitherBind f (Right r) = case f r of { Left e -> Left e; Right x -> Right x }
-
-typedInt :: [a] -> Int -> TypedInt a
-typedInt _ = TypedInt
-
-l !!! (TypedInt i) = l !! i
-
-solve :: (Eq c, Eq s) => [c] -> (c -> [s]) -> [s] -> Either (SolveError c s) [[s]]
+solve :: forall c s. (Ord c, Ord s) => [c] -> (c -> [s]) -> [s] -> Either (SolveError c s) [[s]]
 solve constraints_ satisfiers_ knowns_ =
   let
-    -- revertS s = IM.findIndicesSet (== s)
-    -- revertC c = IM.findIndicesSet (== c)
-    revertS = map (satisfiersMap !) . IS.toList
-    revertC = map (constraintsMap !) . IS.toList
-    -- revertS is = map (fst . (satisfiersMap !!!)) . IS.toList $ is
-    -- revertC is = map (fst . (constraintsMap !!!)) . IS.toList $ is
-    constraintsMap = IM.fromList $ zip (map (typedInt constraints_) [0..]) constraints_ 
-    satisfiersMap = IM.fromList $ zip (map (typedInt knowns_) [0..]) (nub . concatMap satisfiers_ $ constraints_)
-    -- indexOf mp x = fromJust $ lookup x mp
-    indexOf mp x = IM.findIndex (== x) mp
-    -- c2s :: TypedIntMap c (TypedIntSet s)
-    c2s = IM.fromList . map (\c -> (indexOf constraintsMap c, IS.fromList $ map (indexOf satisfiersMap) (satisfiers_ c))) $ constraints_
-    -- s2c :: TypedIntMap s (TypedIntSet c)
+    c2s :: Map c (Set s)
+    c2s = M.fromList . map (\c -> (c, S.fromList $ (satisfiers_ c))) $ constraints_
+    s2c :: Map s (Set c)
     s2c = transpose c2s
 
-    solutions prob@(Problem c u k) = eitherBind descend (children prob) where
-      descend childs = bubbleError $ do
-        child <- childs
-        if (IS.null . probUnknowns $ child) then return (Right child) else collapseError $ solutions child
+    solutions :: Problem c s -> ListT (Either (SolveError c s)) (Problem c s)
+    solutions prob = do
+      child <- children prob
+      if (S.null . probUnknowns $ child) then return child else solutions child
 
-    children prob@(Problem c u k) = bubbleError $ do
-      trace (show . unTypedIntSet $ k) (return ())
+    children :: Problem c s -> ListT (Either (SolveError c s)) (Problem c s)
+    children prob@(Problem c u k) = do
       -- deterministically pick the constraint with the least number of satisfiers
-      let numSatisfiers = IS.size . IS.intersection u . (c2s !)
-      let possibleKnowns = IS.intersection u . (c2s !) . minimumByMap numSatisfiers
+      let numSatisfiers = S.size . S.intersection u . (c2s !)
+      let possibleKnowns = S.intersection u . (c2s !) . minimumByMap numSatisfiers
       -- nondeterministically pick a satisfier for the chosen constraint
-      newKnown <- IS.toList . possibleKnowns $ c
-      return $ move prob newKnown
+      newKnown <- toT $ S.toList . possibleKnowns $ c
+      lift $ move prob newKnown
 
+    move :: Problem c s -> s -> Either (SolveError c s) (Problem c s)
     move prob@(Problem c u k) newKnown =
-      if not (IS.member newKnown u)
-      then Left (InvalidMove (satisfiersMap ! newKnown) (revertS k))
-      else
-       Right $
-        Problem
-          (IS.difference c (s2c ! newKnown))
-          (IS.difference u (IS.unions (map (c2s !) . IS.toList $ (s2c ! newKnown))))
-          (IS.insert newKnown k)
+      
+      if not (S.member newKnown u)
+      then throwError (InvalidMove newKnown (S.toList k))
+      else return $ Problem
+        (S.difference c (s2c ! newKnown))
+        (S.difference u (S.unions (map (c2s !) . S.toList $ (s2c ! newKnown))))
+        (S.insert newKnown k)
 
-    indices mp = IM.keysSet mp
-    blank = Problem (indices constraintsMap) (indices satisfiersMap) IS.empty
-    moveWithError (Left err) _ = Left err
-    moveWithError (Right r) k = move r k
-    withKnowns = foldl moveWithError (Right blank) (map (indexOf satisfiersMap) knowns_)
-    asSatisfiers = map (satisfiersMap !) . IS.toList . probKnowns
-  --in (Right $ mapM asSatisfiers) =<< solutions =<< withKnowns
-  in case withKnowns of
-       Left err -> Left err
-       Right prob ->
-         case solutions prob of
-           Left err_ -> Left err_
-           Right sls -> Right $ map asSatisfiers sls
+    blank = Problem (M.keysSet c2s) (M.keysSet s2c) S.empty
+    withKnowns :: Either (SolveError c s) (Problem c s)
+    withKnowns = foldM move blank knowns_
+    asSatisfiers = S.toList . probKnowns
+  in runListT $ return . asSatisfiers =<< solutions =<< lift withKnowns
     
-minimumByMap :: (Ord b) => (TypedInt a -> b) -> TypedIntSet a -> TypedInt a
-minimumByMap f = snd . minimumBy orderFst . map (\x -> (f x, x)) . IS.toList
+minimumByMap :: (Ord b) => (a -> b) -> Set a -> a
+minimumByMap f = snd . minimumBy orderFst . map (\x -> (f x, x)) . S.toList
 
 orderFst :: (Ord a) => (a,b) -> (a,b) -> Ordering
 orderFst (x,_) (y,_) = compare x y
 
-transpose :: TypedIntMap a (TypedIntSet b) -> TypedIntMap b (TypedIntSet a)
-transpose grid = IM.fromList [(k, refs k) | k <- gridVals] where
-  gridVals = IS.toList . IS.unions . IM.elems $ grid
-  refs k = IS.fromList . IM.keys . IM.filter (IS.member k) $ grid
+transpose :: (Ord a, Ord b) => Map a (Set b) -> Map b (Set a)
+transpose grid = M.fromList [(k, refs k) | k <- gridVals] where
+  gridVals = S.toList . S.unions . M.elems $ grid
+  refs k = S.fromList . M.keys . M.filter (S.member k) $ grid
 
 data ConsistencyError c s = KD (KeyDiff c s) | VD (ValDiff c s)
   deriving (Show)

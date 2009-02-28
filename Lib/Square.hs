@@ -4,7 +4,7 @@ import List
 import Array
 
 import ExactCover
-import ArrayDefault
+import Lib.ArrayDefault
 
 data Constraint c =
     RowColumn Int Int
@@ -35,8 +35,9 @@ type Val = Int
 data Move = Move (Int,Int) Val
   deriving (Eq)
 
-solveSquare :: (Eq c) => [c] -> (c -> [Move]) -> Grid -> Grid
-solveSquare c s = fromMoves . head . solve (constraints c) (satisfiers s) . toMoves
+--solveSquare :: (Eq c) => [c] -> (c -> [Move]) -> Grid -> Grid
+solveSquare c s = fromMoves . head . fromRight . solve (constraints c) (satisfiers s) . toMoves
+fromRight (Right x) = x
 
 data Grid = Grid [[Val]]
 

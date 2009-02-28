@@ -1,8 +1,6 @@
 module Inst.LatinSquare where
 
-import Square
+import Lib.Square
 
 solveLatinSquare :: Grid -> Grid
 solveLatinSquare = solveSquare [] (\() -> [])
-
-main = print $ solveLatinSquare sampleGrid

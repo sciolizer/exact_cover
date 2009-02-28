@@ -1,6 +1,6 @@
 module Inst.Sudoku where
 
-import Square
+import Lib.Square
 
 data BoxConstraint =
   BoxNumber (Int,Int) Val  -- (Int,Int) is coords of upper left cell in box
@@ -15,7 +15,5 @@ otherSatisfiers :: BoxConstraint -> [Move]
 otherSatisfiers (BoxNumber (r_i,c_i) val) =
   [Move (r+r_i,c+c_i) val | r <- [0..2], c <- [0..2]]
  
-solveSudoku :: Grid -> Grid
+-- solveSudoku :: Grid -> Grid
 solveSudoku = solveSquare otherConstraints otherSatisfiers
-
-main = print $ solveSudoku sampleGrid

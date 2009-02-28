@@ -1,8 +1,8 @@
 module Lib.TypedIntMap where
 
 import qualified Data.IntMap as IM
-import qualified TypedIntSet as TIS
-import TypedInt
+import qualified Lib.TypedIntSet as TIS
+import Lib.TypedInt
 
 data TypedIntMap key val = TypedIntMap { unTypedIntMap :: (IM.IntMap val) }
 

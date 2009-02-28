@@ -11,6 +11,7 @@ import qualified Data.Set as S
 import qualified Data.Map as M
 import Data.Set (Set)
 import Data.Map (Map,(!))
+import Debug.Trace
 
 data Problem c s = Problem {
   probConstraints :: Set c,

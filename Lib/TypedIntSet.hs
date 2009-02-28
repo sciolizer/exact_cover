@@ -1,7 +1,7 @@
 module Lib.TypedIntSet where
 
 import qualified Data.IntSet as IS
-import TypedInt
+import Lib.TypedInt
 
 data TypedIntSet val = TypedIntSet { unTypedIntSet :: IS.IntSet }
 

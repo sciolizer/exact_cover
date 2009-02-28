@@ -4,11 +4,11 @@ import List (nub, minimumBy, find)
 import qualified List as L
 import Maybe
 
-import qualified TypedIntSet as IS
-import TypedIntSet (TypedIntSet(TypedIntSet,unTypedIntSet))
-import qualified TypedIntMap as IM
-import TypedIntMap (TypedIntMap, (!))
-import TypedInt
+import qualified Lib.TypedIntSet as IS
+import Lib.TypedIntSet (TypedIntSet(TypedIntSet,unTypedIntSet))
+import qualified Lib.TypedIntMap as IM
+import Lib.TypedIntMap (Lib.TypedIntMap, (!))
+import Lib.TypedInt
 
 import Debug.Trace
 

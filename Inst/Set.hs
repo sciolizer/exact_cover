@@ -1,4 +1,4 @@
-module Main where
+module Inst.Set where
 
 import qualified Data.Set as S
 

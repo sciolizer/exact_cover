@@ -1,4 +1,4 @@
-module PentominosTest where
+module T.Pentominos where
 
 import Pentominos
 import Test.QuickCheck

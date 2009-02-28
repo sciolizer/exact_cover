@@ -1,4 +1,4 @@
-module Pentominos where
+module Inst.Pentominos where
 
 import Array
 import ExactCover

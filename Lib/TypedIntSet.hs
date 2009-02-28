@@ -1,4 +1,4 @@
-module TypedIntSet where
+module Lib.TypedIntSet where
 
 import qualified Data.IntSet as IS
 import TypedInt

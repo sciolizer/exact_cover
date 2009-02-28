@@ -1,4 +1,4 @@
-module TypedIntMap where
+module Lib.TypedIntMap where
 
 import qualified Data.IntMap as IM
 import qualified TypedIntSet as TIS

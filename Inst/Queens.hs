@@ -1,4 +1,4 @@
-module Main where
+module Inst.Queens where
 
 data Constraint =
     Row Int

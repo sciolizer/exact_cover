@@ -1,4 +1,4 @@
-module Main where
+module Inst.Matrix where
 
 data Matrix = Matrix (Array (Int,Int) Bool)
 

@@ -1,4 +1,4 @@
-module Square where
+module Lib.Square where
 
 import List
 import Array

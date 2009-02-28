@@ -1,4 +1,4 @@
-module ArrayDefault where
+module Lib.ArrayDefault where
 
 import Ix
 import Array

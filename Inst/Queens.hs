@@ -13,9 +13,10 @@ data Satisfier = Move Int Int -- row, col
   deriving (Eq,Show,Ord)
 
 constraints :: Int -> [Constraint]
-constraints n =
-    [con val | val <- [0..(n-1)], con <- [Row, Column]]
- ++ [con val | val <- [0..(2*(n-1))], con <- [ForwardDiagonal, BackDiagonal]]
+constraints (n+1) =
+    [con             val | val <- [0..n], con <- [Row, Column]]
+ ++ [ForwardDiagonal val | val <- [0..(2*n)]]
+ ++ [BackDiagonal    val | val <- [(-1*n)..n]]
 
 -- The really big question here is... how do I get the compiler to infer
 -- this function? At least in the case of Row and Column

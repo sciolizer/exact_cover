@@ -3,21 +3,21 @@ module Inst.Matrix where
 import ExactCover
 import Array
 
-data Matrix = Matrix (Array (Int,Int) Bool) deriving (Show,Eq)
+type Matrix = (Array (Int,Int) Bool)
 
 data Constraint = Column Int deriving (Eq,Show,Ord)
 
 constraints :: Matrix -> [Constraint]
-constraints (Matrix arr) =
-  let (l_bound, u_bound) = bounds arr
+constraints matrix =
+  let (l_bound, u_bound) = bounds matrix
   in [Column c | c <- [(snd l_bound)..(snd u_bound)]]
 
 data Satisfier = Row Int deriving (Eq,Show,Ord)
 
 satisfiers :: Matrix -> Constraint -> [Satisfier]
-satisfiers (Matrix arr) (Column c) =
-  let (l_bound, u_bound) = bounds arr
-  in [Row r | r <- [(fst l_bound)..(fst u_bound)], arr ! (r, c)]
+satisfiers matrix (Column c) =
+  let (l_bound, u_bound) = bounds matrix
+  in [Row r | r <- [(fst l_bound)..(fst u_bound)], matrix ! (r, c)]
 
 type Soln = [Int] -- list of rows
 

@@ -36,7 +36,7 @@ data Satisfier = Move (Int,Int) Val
   deriving (Eq,Show,Ord)
 
 --solveSquare :: (Eq c) => [c] -> (c -> [Satisfier]) -> Grid -> Grid
-solveSquare c s = fromMoves . head . fromRight . solve (constraints c) (satisfiers s) . toMoves
+solveSquare c s = fromMoves . head . solve (constraints c) (satisfiers s) . toMoves
 fromRight (Right x) = x
 
 data Grid = Grid [[Val]]

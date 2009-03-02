@@ -3,7 +3,6 @@ module Main where
 import Inst.Matrix
 import Inst.Queens
 import Inst.Sudoku
-import Lib.Square
 import Array
 import qualified Data.Set as S
 

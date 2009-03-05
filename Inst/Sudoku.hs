@@ -36,7 +36,7 @@ satisfiers constraint =
     ColNumber col val       -> [Move (row,col) val | row <- [0..8]]
     BoxNumber (row,col) val -> [Move (r+row,c+col) val | r <- [0..2], c <- [0..2]]
  
-type Grid = Array (Int,Int) Val
+type Grid = Array (Int,Int) Val -- bounds: [(0,0) .. (8,8)]
 
 toMoves :: Grid -> [Satisfier]
 toMoves = concatMap makeMove . assocs where

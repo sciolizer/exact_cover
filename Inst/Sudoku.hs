@@ -36,15 +36,14 @@ satisfiers constraint =
     ColNumber col val       -> [Move (row,col) val | row <- [0..8]]
     BoxNumber (row,col) val -> [Move (r+row,c+col) val | r <- [0..2], c <- [0..2]]
  
-type Grid = [[Val]]
+type Grid = Array (Int,Int) Val
 
 toMoves :: Grid -> [Satisfier]
-toMoves g = concatMap makeMove (zip coords . concat $ g) where
+toMoves = concatMap makeMove . assocs where
   makeMove ((row,col),val) = if val == 0 then [] else [Move (row,col) val]
-  coords = [(row,col) | row <- [0..8], col <- [0..8]]
 
 fromMoves :: [Satisfier] -> Grid
-fromMoves = fromArray . array_default 0 ((0,0), (8,8)) . map makeAssoc where
+fromMoves = array_default 0 ((0,0), (8,8)) . map makeAssoc where
   fromArray arr = [[arr ! (row,col) | col <- [0..8]] | row <- [0..8]]
   makeAssoc (Move (row,col) val) = ((row,col),val)
 

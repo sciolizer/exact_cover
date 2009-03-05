@@ -36,20 +36,7 @@ satisfiers constraint =
     ColNumber col val       -> [Move (row,col) val | row <- [0..8]]
     BoxNumber (row,col) val -> [Move (r+row,c+col) val | r <- [0..2], c <- [0..2]]
  
-type Grid = Array (Int,Int) Val -- bounds: [(0,0) .. (8,8)]
-
-toMoves :: Grid -> [Satisfier]
-toMoves = concatMap makeMove . assocs where
-  makeMove ((row,col),val) = if val == 0 then [] else [Move (row,col) val]
-
-fromMoves :: [Satisfier] -> Grid
-fromMoves = array_default 0 ((0,0), (8,8)) . map makeAssoc where
-  fromArray arr = [[arr ! (row,col) | col <- [0..8]] | row <- [0..8]]
-  makeAssoc (Move (row,col) val) = ((row,col),val)
-
-array_default :: (Ix i) => e -> (i, i) -> [(i,e)] -> Array i e
-array_default def rng overrides =
-  array rng $ zip (range rng) (repeat def) ++ overrides
+type Grid = [Satisfier]
 
 solveSudoku :: Grid -> [Grid]
-solveSudoku = map fromMoves . solve constraints satisfiers . toMoves
+solveSudoku = solve constraints satisfiers

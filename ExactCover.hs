@@ -1,7 +1,9 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module ExactCover (solve) where
 
-import List (nub, minimumBy, find)
+-- Knuth's Algorithm X, using the List monad for non-determinism
+
+import List (nub, minimumBy, find, foldl1)
 
 import qualified Data.Set as S
 import qualified Data.Map as M
@@ -26,13 +28,14 @@ solve constraints_ satisfiers_ knowns_ =
     solutions :: Problem c s -> [Problem c s]
     solutions prob = do
       child <- children prob
-      if (S.null . probUnknowns $ child) then return child else solutions child
+      let isNull f = S.null (f child)
+      if isNull probConstraints && isNull probUnknowns then return child else solutions child
 
     children :: Problem c s -> [Problem c s]
     children prob@(Problem c u k) = do
       -- deterministically pick the constraint with the least number of satisfiers
       let numSatisfiers = S.size . S.intersection u . (c2s !)
-      let possibleKnowns = S.intersection u . (c2s !) . minimumByMap numSatisfiers
+      let possibleKnowns = S.intersection u . (c2s !) . minimumBy (compare `on` numSatisfiers) . S.toList
       -- nondeterministically pick a satisfier for the chosen constraint
       newKnown <- S.toList . possibleKnowns $ c
       return $ move prob newKnown
@@ -52,9 +55,6 @@ solve constraints_ satisfiers_ knowns_ =
     asSatisfiers = S.toList . probKnowns
   in return . asSatisfiers =<< solutions withKnowns
     
-minimumByMap :: (Ord b) => (a -> b) -> Set a -> a
-minimumByMap f = snd . minimumBy (compare `on` fst) . map (\x -> (f x, x)) . S.toList
-
 transpose :: (Ord a, Ord b) => Map a (Set b) -> Map b (Set a)
 transpose grid = M.fromList [(k, refs k) | k <- gridVals] where
   gridVals = S.toList . S.unions . M.elems $ grid

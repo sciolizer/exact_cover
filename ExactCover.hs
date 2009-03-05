@@ -22,6 +22,7 @@ solve constraints_ satisfiers_ knowns_ =
   let
     c2s :: Map c (Set s)
     c2s = M.fromList . map (\c -> (c, S.fromList $ (satisfiers_ c))) $ constraints_
+
     s2c :: Map s (Set c)
     s2c = transpose c2s
 
@@ -50,10 +51,11 @@ solve constraints_ satisfiers_ knowns_ =
         (S.insert newKnown k)
 
     blank = Problem (M.keysSet c2s) (M.keysSet s2c) S.empty
+
     withKnowns :: Problem c s
     withKnowns = foldl move blank knowns_
-    asSatisfiers = S.toList . probKnowns
-  in return . asSatisfiers =<< solutions withKnowns
+
+  in return . S.toList . probKnowns =<< solutions withKnowns
     
 transpose :: (Ord a, Ord b) => Map a (Set b) -> Map b (Set a)
 transpose grid = M.fromList [(k, refs k) | k <- gridVals] where

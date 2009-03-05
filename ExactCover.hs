@@ -10,6 +10,7 @@ import qualified Data.Map as M
 import Data.Set (Set)
 import Data.Map (Map,(!))
 import Debug.Trace
+import Data.Function
 
 data Problem c s = Problem {
   probConstraints :: Set c,
@@ -48,7 +49,6 @@ solve constraints_ satisfiers_ knowns_ =
 
     move :: Problem c s -> s -> Problem c s
     move prob@(Problem c u k) newKnown =
-      
       if not (S.member newKnown u)
       then error "invalid state"
       else Problem
@@ -63,10 +63,7 @@ solve constraints_ satisfiers_ knowns_ =
   in return . asSatisfiers =<< solutions withKnowns
     
 minimumByMap :: (Ord b) => (a -> b) -> Set a -> a
-minimumByMap f = snd . minimumBy orderFst . map (\x -> (f x, x)) . S.toList
-
-orderFst :: (Ord a) => (a,b) -> (a,b) -> Ordering
-orderFst (x,_) (y,_) = compare x y
+minimumByMap f = snd . minimumBy (compare `on` fst) . map (\x -> (f x, x)) . S.toList
 
 transpose :: (Ord a, Ord b) => Map a (Set b) -> Map b (Set a)
 transpose grid = M.fromList [(k, refs k) | k <- gridVals] where

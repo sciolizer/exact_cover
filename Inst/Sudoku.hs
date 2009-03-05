@@ -4,7 +4,10 @@ import List
 import Array
 
 import ExactCover
-import Lib.ArrayDefault
+import Maybe (mapMaybe,catMaybes)
+--import Lib.ArrayDefault
+
+type Val = Int
 
 data Constraint c =
     RowColumn Int Int
@@ -21,6 +24,7 @@ constraints =
  ++ [RowNumber row val | row <- [0..8], val <- [1..9]]
     -- every column must have the numbers 1 through 9
  ++ [ColNumber col val | col <- [0..8], val <- [1..9]]
+   -- every box must have the numbers 1 through 9
  ++ [BoxNumber (row,col) val | row <- [0,3,6], col <- [0,3,6], val <- [1..9]]
     
 satisfiers :: Constraint c -> [Satisfier]
@@ -42,22 +46,7 @@ data Satisfier = Move (Int,Int) Val
 solveSudoku :: Grid -> [Grid]
 solveSudoku = map fromMoves . solve constraints satisfiers . toMoves
 
-data Grid = Grid [[Val]]
-
-instance Show Grid where
-  show (Grid g) = concat . intersperse "\n" . map show $ g
-
-sampleGrid = Grid [
-  [0,0,3,0,2,0,6,0,0],
-  [9,0,0,3,0,5,0,0,1],
-  [0,0,1,8,0,6,4,0,0],
-  [0,0,8,1,0,2,9,0,0],
-  [7,0,0,0,0,0,0,0,8],
-  [0,0,6,7,0,8,2,0,0],
-  [0,0,2,6,0,9,5,0,0],
-  [8,0,0,2,0,3,0,0,9],
-  [0,0,5,0,1,0,3,0,0]
-  ]
+type Grid = [[Val]]
 
 toMoves :: Grid -> [Satisfier]
 toMoves (Grid g) = concatMap makeMove (zip coords . concat $ g) where
@@ -65,6 +54,6 @@ toMoves (Grid g) = concatMap makeMove (zip coords . concat $ g) where
   coords = [(row,col) | row <- [0..8], col <- [0..8]]
 
 fromMoves :: [Satisfier] -> Grid
-fromMoves = Grid . fromArray . array_default 0 ((0,0), (8,8)) . map makeAssoc where
+fromMoves = fromArray . array_default 0 ((0,0), (8,8)) where
   fromArray arr = [[arr ! (row,col) | col <- [0..8]] | row <- [0..8]]
   makeAssoc (Move (row,col) val) = ((row,col),val)

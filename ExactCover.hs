@@ -52,10 +52,7 @@ solve constraints_ satisfiers_ knowns_ =
 
     blank = Problem (M.keysSet c2s) (M.keysSet s2c) S.empty
 
-    withKnowns :: Problem c s
-    withKnowns = foldl move blank knowns_
-
-  in return . S.toList . probKnowns =<< solutions withKnowns
+  in return . S.toList . probKnowns =<< solutions (foldl move blank knowns_)
     
 transpose :: (Ord a, Ord b) => Map a (Set b) -> Map b (Set a)
 transpose grid = M.fromList [(k, refs k) | k <- gridVals] where

@@ -50,7 +50,7 @@ fromMoves = fromArray . array_default 0 ((0,0), (8,8)) . map makeAssoc where
 
 array_default :: (Ix i) => e -> (i, i) -> [(i,e)] -> Array i e
 array_default def rng overrides =
-  array rng ((zip (range rng) . repeat $ def) ++ overrides)
+  array rng $ zip (range rng) (repeat def) ++ overrides
 
 solveSudoku :: Grid -> [Grid]
 solveSudoku = map fromMoves . solve constraints satisfiers . toMoves

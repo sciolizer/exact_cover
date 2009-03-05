@@ -2,28 +2,18 @@
 module ExactCover (solve) where
 
 import List (nub, minimumBy, find)
-import Maybe
-import Control.Monad
 
 import qualified Data.Set as S
 import qualified Data.Map as M
 import Data.Set (Set)
 import Data.Map (Map,(!))
-import Debug.Trace
-import Data.Function
+import Data.Function (on)
 
 data Problem c s = Problem {
   probConstraints :: Set c,
   probUnknowns :: Set s,
   probKnowns :: Set s
   }
-
--- "known" and "satisfier" are very similar.
--- A "satisfier" meets a certain constraint. A "known" is a satisfier which
--- applies to the current problem.
---
--- throughout the code, the type variable 'c' is short for 'constraint',
--- and 's' is short for 'satisfier'
 
 solve :: forall c s. (Ord c, Ord s) => [c] -> (c -> [s]) -> [s] -> [[s]]
 solve constraints_ satisfiers_ knowns_ =

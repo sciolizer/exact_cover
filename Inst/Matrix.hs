@@ -1,5 +1,9 @@
 module Inst.Matrix where
 
+-- The ExactCover problem, as it is usually presented - 
+-- a matrix of booleans where a subset of rows must be chosen so that
+-- each column has exactly one true value.
+
 import ExactCover
 import Array
 
@@ -19,7 +23,7 @@ satisfiers matrix (Column c) =
   let (l_bound, u_bound) = bounds matrix
   in [Row r | r <- [(fst l_bound)..(fst u_bound)], matrix ! (r, c)]
 
-type Soln = [Int] -- list of rows
+type Soln = [Satisfier]
 
--- solveMatrix :: Matrix -> [Soln] -- list of rows
+solveMatrix :: Matrix -> [Soln]
 solveMatrix m = solve (constraints m) (satisfiers m) []

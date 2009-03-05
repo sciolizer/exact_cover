@@ -1,5 +1,9 @@
 module Inst.Queens where
 
+-- The N queens problem.
+-- Uses GeneralizedExactCover, because it is not required
+-- for each diagonal to contain a piece.
+
 import Lib.GeneralizedExactCover
 
 data Constraint =

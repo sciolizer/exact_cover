@@ -2,12 +2,12 @@ module Lib.GeneralizedExactCover where
 
 import ExactCover
 
-data Constraint c
+data Constraint' c
   = Required c
   | Optional c -- must be satisfied AT MOST once
   deriving (Eq,Ord,Show)
 
-data Satisfier s c
+data Satisfier' s c
   = Normal s
   | PlaceHolder c -- used in a solution when the associated optional constraint is met zero times
   deriving (Eq,Ord,Show)

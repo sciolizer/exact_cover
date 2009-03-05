@@ -44,10 +44,13 @@ solve constraints_ satisfiers_ knowns_ =
     move :: Problem c s -> s -> Problem c s
     move prob@(Problem c u k) newKnown =
       if not (S.member newKnown u)
-      then error "invalid state"
+      then error "invalid state" -- two or more knowns_ met the same constraint
       else Problem
+        -- remove all constraints met by chosen satisfier
         (S.difference c (s2c ! newKnown))
+        -- remove all satisfiers of those constraints
         (S.difference u (S.unions (map (c2s !) . S.toList $ (s2c ! newKnown))))
+        -- add chosen satisfier as a new known
         (S.insert newKnown k)
 
     blank = Problem (M.keysSet c2s) (M.keysSet s2c) S.empty

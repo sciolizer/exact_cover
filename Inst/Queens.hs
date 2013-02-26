@@ -17,13 +17,14 @@ data Satisfier = Move Int Int -- row, col
   deriving (Eq,Show,Ord)
 
 required, optional :: Int -> [Constraint]
-required (n+1) = [con val | con <- [Row, Column], val <- [0..n]]
-optional (n+1) =
-    [ForwardDiagonal val | val <- [0..(2*n)]]
- ++ [BackDiagonal    val | val <- [(-1*n)..n]]
+required n = [con val | con <- [Row, Column], val <- [0..(n-1)]]
+optional n =
+    [ForwardDiagonal val | val <- [0..(2*(n-1))]]
+ ++ [BackDiagonal    val | val <- [(-1*(n-1))..(n-1)]]
 
 satisfiers :: Int -> Constraint -> [Satisfier]
-satisfiers (n+1) c =
+satisfiers nPlusOne c =
+  let n = nPlusOne - 1 in
   case c of
     Row row ->             [Move row col | col <- [0..n]]
     Column col ->          [Move row col | row <- [0..n]]

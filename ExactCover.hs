@@ -3,7 +3,7 @@ module ExactCover (solve) where
 
 -- Knuth's Algorithm X, using the List monad for non-determinism
 
-import List (minimumBy)
+import Data.List (minimumBy)
 
 import qualified Data.Set as S
 import qualified Data.Map as M

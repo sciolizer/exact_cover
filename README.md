@@ -1,3 +1,11 @@
+Implementation of Donald Knuth's
+[Algorithm X](http://www-cs-faculty.stanford.edu/~uno/papers/dancing-color.ps.gz).
+This is NOT the dancing links algorithm.
+Instead of matrices, I just use maps and sets.
+If I remember correctly, the performance got WORSE when I tried to switch
+over to IntMap and IntSet (wtf haskell?).
+I don't remember if I tried using IOArrays.
+
     $ ghci
     GHCi, version 7.4.1: http://www.haskell.org/ghc/  :? for help
     Loading package ghc-prim ... linking ... done.

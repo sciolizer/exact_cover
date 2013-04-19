@@ -5,7 +5,7 @@ module Inst.Matrix where
 -- each column has exactly one true value.
 
 import ExactCover
-import Array
+import Data.Array
 
 type Matrix = (Array (Int,Int) Bool)
 
@@ -27,3 +27,8 @@ type Soln = [Satisfier]
 
 solveMatrix :: Matrix -> [Soln]
 solveMatrix m = solve (constraints m) (satisfiers m) []
+
+-- [ 0 1
+--   1 0 ]
+example :: Matrix
+example = array ((0, 0), (1, 1)) [((0, 0), False), ((0, 1), True), ((1, 0), True), ((1, 1), False)]
